@@ -1,24 +1,21 @@
-# box-emoji
+# punch-emoji
 
-## Project setup
+#### 项目简介
+打拳表情包生成器, 快来生成你的打拳表情包
+![demo](./src/assets/demo.jpg)
+
+## 安装项目
 ```
 yarn install
+npm install
 ```
 
-### Compiles and hot-reloads for development
+### 运行项目
 ```
-yarn serve
-```
-
-### Compiles and minifies for production
-```
-yarn build
+npm run serve
 ```
 
-### Lints and fixes files
+### 打包项目
 ```
-yarn lint
+npm run build
 ```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
