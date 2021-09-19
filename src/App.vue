@@ -78,7 +78,7 @@ export default {
       width: 200,
       height: 200,
       enableRetinaScaling: false,
-      backgroundColor: '#ccc',
+      backgroundColor: '#fff',
     });
     this.templateImgInit();
     this.fistLeftInit();
@@ -254,8 +254,8 @@ export default {
       }, 5000);
       let canvas = document.querySelector('canvas');
       const cap = new window.CCapture({
-        framerate: 35,
-        timeLimit: 1.3,
+        framerate: 40,
+        timeLimit: 1.5,
         name: 'punch',
         format: 'gif',
         workersPath: this.publicPath,
