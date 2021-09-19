@@ -17,8 +17,24 @@
     <input type="file" accept="image/*" multiple @change="uploadImg" />
     <div class="action-box">
       <cube-button :disabled="disablePlay" @click="play()">预览</cube-button>
-      <cube-button primary @click="donwload()">下载</cube-button>
+      <cube-button :disabled="downlaodLock" primary @click="donwload()"
+        >下载</cube-button
+      >
     </div>
+    <cube-popup type="my-popup" ref="myPopup">
+      <div class="cropper-wrap">
+        <vue-cropper
+          autoCrop
+          :outputSize="cropperOptions.outputSize"
+          :img="cropperImg"
+          ref="cropper"
+          centerBox
+        />
+        <cube-button @click="getCropData()" style="margin:10px 0" type="primary"
+          >裁剪确定</cube-button
+        >
+      </div>
+    </cube-popup>
   </div>
 </template>
 
@@ -33,12 +49,16 @@ export default {
   data() {
     return {
       publicPath: process.env.BASE_URL,
+      cropperImg: null,
       templateImg: defaultImg,
       templateMoveCoords: [
         { left: 5, top: 20 },
         { left: 20, top: 5 },
         { left: 35, top: 20 },
       ],
+      cropperOptions: {
+        outputSize: 1,
+      },
       disablePlay: false,
       rect: null,
       canvas: null,
@@ -50,14 +70,15 @@ export default {
       fistRightDone: false,
       gifData: undefined,
       cap: null,
+      downlaodLock: false,
     };
   },
   mounted() {
     this.canvas = new fabric.StaticCanvas('c', {
-      width: 240,
-      height: 240,
+      width: 200,
+      height: 200,
       enableRetinaScaling: false,
-      backgroundColor: '#fff',
+      backgroundColor: '#ccc',
     });
     this.templateImgInit();
     this.fistLeftInit();
@@ -72,8 +93,8 @@ export default {
           left,
           top,
           selectable: false,
-          scaleX: 200 / img.width,
-          scaleY: 200 / img.height,
+          scaleX: 160 / img.width,
+          scaleY: 160 / img.height,
         });
         this.rect = img;
         this.canvas.add(this.rect);
@@ -85,7 +106,7 @@ export default {
       fabric.Image.fromURL(fist, (oImg) => {
         oImg.scale(0.2);
         oImg.left = 30;
-        oImg.top = 200;
+        oImg.top = 170;
         oImg.angle = -45;
         oImg.selectable = false;
         oImg.originX = oImg.originY = 'center';
@@ -99,8 +120,8 @@ export default {
       fabric.Image.fromURL(fist, (oImg) => {
         oImg.scale(0.2);
         oImg.flipX = true; // 镜像翻转
-        oImg.left = 210;
-        oImg.top = 200;
+        oImg.left = 170;
+        oImg.top = 170;
         oImg.angle = 45;
         oImg.selectable = false;
         oImg.originX = oImg.originY = 'center';
@@ -133,8 +154,8 @@ export default {
     // 左拳头动画
     fistAnimate() {
       const arr = [
-        { scaleX: 0.2, scaleY: 0.2, angle: -45, left: 30, top: 200 },
-        { scaleX: 0.4, scaleY: 0.4, angle: -10, left: 60, top: 180 },
+        { scaleX: 0.2, scaleY: 0.2, angle: -45, left: 30, top: 170 },
+        { scaleX: 0.35, scaleY: 0.35, angle: -10, left: 60, top: 150 },
       ];
 
       this.fistLeft.animate(this.fistLeftDone ? arr[0] : arr[1], {
@@ -148,8 +169,8 @@ export default {
     // 右拳头动画
     fistRightAnimate() {
       const arr = [
-        { scaleX: 0.2, scaleY: 0.2, angle: 45, left: 210, top: 200 },
-        { scaleX: 0.4, scaleY: 0.4, angle: 10, left: 180, top: 180 },
+        { scaleX: 0.2, scaleY: 0.2, angle: 45, left: 170, top: 170 },
+        { scaleX: 0.35, scaleY: 0.35, angle: 10, left: 140, top: 150 },
       ];
 
       this.fistRgiht.animate(this.fistRightDone ? arr[0] : arr[1], {
@@ -167,26 +188,23 @@ export default {
     },
     // 替换图片素材
     changeImage(src) {
+      const { left, top } = this.templateMoveCoords[0];
       this.rect.setSrc(src, (img) => {
         this.rect.set({
-          left: 40,
-          top: 40,
+          left,
+          top,
           selectable: false,
-          scaleX: 200 / img.width,
-          scaleY: 200 / img.height,
+          scaleX: 160 / img.width,
+          scaleY: 160 / img.height,
         });
         this.canvas.renderAll();
         // this.canvas.setCoords();
       });
-
-      //Its a 106KB size image
-
       this.canvas.renderAll();
       this.canvas.calcOffset();
     },
     // 图片上传
     uploadImg(event) {
-      console.log('开始上传');
       const e = window.event || event;
       const oFile = e.target.files[0];
       const imgMaxSize = 1024 * 1024 * 4;
@@ -214,8 +232,9 @@ export default {
       const reads = new FileReader();
       reads.readAsDataURL(oFile);
       reads.onload = () => {
-        this.templateImg = reads.result;
-        this.changeImage(reads.result);
+        this.cropperImg = reads.result;
+        const component = this.$refs['myPopup'];
+        component.show();
       };
     },
 
@@ -229,11 +248,14 @@ export default {
         toast.show();
         return;
       }
+      this.downlaodLock = true;
+      setTimeout(() => {
+        this.downlaodLock = false;
+      }, 5000);
       let canvas = document.querySelector('canvas');
       const cap = new window.CCapture({
-        framerate: 30,
-        quality: 1,
-        timeLimit: 1.2,
+        framerate: 35,
+        timeLimit: 1.3,
         name: 'punch',
         format: 'gif',
         workersPath: this.publicPath,
@@ -265,6 +287,13 @@ export default {
       //   }
       // });
     },
+    getCropData() {
+      this.$refs.cropper.getCropData((data) => {
+        this.templateImg = data;
+        this.changeImage(data);
+        this.$refs['myPopup'].hide();
+      });
+    },
   },
 };
 </script>
@@ -282,6 +311,11 @@ body {
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
+  .cube-extend-popup {
+    .cube-extend-popup-content {
+      padding: 10px;
+    }
+  }
   .punch-descript {
     font-size: 30px;
     margin-top: 20px;
@@ -316,6 +350,11 @@ body {
     margin-top: 10px;
     display: flex;
     justify-content: center;
+  }
+  .cropper-wrap {
+    width: 100%;
+    min-width: 150px;
+    height: 300px;
   }
   // #c {
   //   background: #ccc;

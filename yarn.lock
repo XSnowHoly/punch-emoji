@@ -8760,6 +8760,11 @@ vue-create-api@^0.2.3:
   resolved "https://registry.npm.taobao.org/vue-create-api/download/vue-create-api-0.2.3.tgz#920b4e76349cf6aef692a6f743b96dc09eade5cd"
   integrity sha1-kgtOdjSc9q72kqb3Q7ltwJ6t5c0=
 
+vue-cropper@^0.5.6:
+  version "0.5.6"
+  resolved "https://registry.nlark.com/vue-cropper/download/vue-cropper-0.5.6.tgz#a38c98d402da1421bd5e7535e16b9723f103cafd"
+  integrity sha1-o4yY1ALaFCG9XnU14WuXI/EDyv0=
+
 vue-eslint-parser@^7.0.0:
   version "7.11.0"
   resolved "https://registry.nlark.com/vue-eslint-parser/download/vue-eslint-parser-7.11.0.tgz?cache=0&sync_timestamp=1630882911486&other_urls=https%3A%2F%2Fregistry.nlark.com%2Fvue-eslint-parser%2Fdownload%2Fvue-eslint-parser-7.11.0.tgz#214b5dea961007fcffb2ee65b8912307628d0daf"
