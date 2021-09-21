@@ -4,16 +4,15 @@
     <div class="punch">
       <canvas id="c" width="240" height="240"></canvas>
     </div>
-    <div class="notice">
-      <div class="title">操作指南:</div>
-      <br />
-      可点击下方上传自定义图片，点击预览-> 下载,
-      <br />
-      图片过大的话生成 gif 需要点时间，请耐心等待几秒~
-      <br />
-      如果图片下载失败，可能浏览器不支持，可尝试手机自带浏览器或谷歌、火狐浏览器
-      <strike>(等开发者修复)</strike>
+    <div class="punch-list">
+      <h2>拳头类型：</h2>
+      <cube-checker
+        v-model="checkPunchStyleValue"
+        :options="punchStyleList"
+        type="radio"
+      />
     </div>
+    <Notice />
     <input type="file" accept="image/*" multiple @change="uploadImg" />
     <div class="action-box">
       <cube-button :disabled="disablePlay" @click="play()">预览</cube-button>
@@ -40,21 +39,44 @@
 
 <script>
 import { fabric } from 'fabric';
-import fist from '@/assets/fist.png';
+import Notice from './components/Notice.vue';
+import fistImg from '@/assets/fist.png';
+import punchImg from '@/assets/punch.png';
 import defaultImg from '@/assets/hehe.png';
 
 export default {
   name: 'App',
-  components: {},
+  components: {
+    Notice,
+  },
   data() {
     return {
       publicPath: process.env.BASE_URL,
+      checkPunchStyleValue: fistImg,
+      punchStyleList: [
+        {
+          value: fistImg,
+          text: '普通拳',
+        },
+        {
+          value: punchImg,
+          text: '火焰拳',
+        },
+      ],
       cropperImg: null,
       templateImg: defaultImg,
       templateMoveCoords: [
         { left: 5, top: 20 },
         { left: 20, top: 5 },
         { left: 35, top: 20 },
+      ],
+      puncLeftMoveCoords: [
+        { scaleX: 0.2, scaleY: 0.2, angle: -45, left: 30, top: 170 },
+        { scaleX: 0.35, scaleY: 0.35, angle: -10, left: 60, top: 150 },
+      ],
+      puncRightMoveCoords: [
+        { scaleX: 0.2, scaleY: 0.2, angle: 45, left: 170, top: 170 },
+        { scaleX: 0.35, scaleY: 0.35, angle: 10, left: 140, top: 150 },
       ],
       cropperOptions: {
         outputSize: 1,
@@ -65,7 +87,7 @@ export default {
       index: 0,
       opinion: true,
       fistLeft: null,
-      fistRgiht: null,
+      fistRight: null,
       fistLeftDone: false,
       fistRightDone: false,
       gifData: undefined,
@@ -83,6 +105,11 @@ export default {
     this.templateImgInit();
     this.fistLeftInit();
     this.fistightInit();
+  },
+  watch: {
+    checkPunchStyleValue(val) {
+      this.changePunchImage(val);
+    },
   },
   methods: {
     // 模板图片初始化
@@ -103,7 +130,7 @@ export default {
     },
     // 左拳初始化
     fistLeftInit() {
-      fabric.Image.fromURL(fist, (oImg) => {
+      fabric.Image.fromURL(fistImg, (oImg) => {
         oImg.scale(0.2);
         oImg.left = 30;
         oImg.top = 170;
@@ -117,7 +144,7 @@ export default {
     },
     // 右拳初始化
     fistightInit() {
-      fabric.Image.fromURL(fist, (oImg) => {
+      fabric.Image.fromURL(fistImg, (oImg) => {
         oImg.scale(0.2);
         oImg.flipX = true; // 镜像翻转
         oImg.left = 170;
@@ -127,7 +154,7 @@ export default {
         oImg.originX = oImg.originY = 'center';
         this.canvas.bringToFront(oImg);
         this.canvas.add(oImg);
-        this.fistRgiht = oImg;
+        this.fistRight = oImg;
       });
     },
     // 模板图片动画
@@ -153,31 +180,31 @@ export default {
     },
     // 左拳头动画
     fistAnimate() {
-      const arr = [
-        { scaleX: 0.2, scaleY: 0.2, angle: -45, left: 30, top: 170 },
-        { scaleX: 0.35, scaleY: 0.35, angle: -10, left: 60, top: 150 },
-      ];
-
-      this.fistLeft.animate(this.fistLeftDone ? arr[0] : arr[1], {
-        duration: 100,
-        onChange: this.canvas.renderAll.bind(this.canvas),
-        onComplete: this.fistRightAnimate,
-        easing: fabric.util.ease.easeOutCubic,
-      });
+      this.fistLeft.animate(
+        this.fistLeftDone
+          ? this.puncLeftMoveCoords[0]
+          : this.puncLeftMoveCoords[1],
+        {
+          duration: 100,
+          onChange: this.canvas.renderAll.bind(this.canvas),
+          onComplete: this.fistRightAnimate,
+          easing: fabric.util.ease.easeOutCubic,
+        },
+      );
       this.fistLeftDone = !this.fistLeftDone;
     },
     // 右拳头动画
     fistRightAnimate() {
-      const arr = [
-        { scaleX: 0.2, scaleY: 0.2, angle: 45, left: 170, top: 170 },
-        { scaleX: 0.35, scaleY: 0.35, angle: 10, left: 140, top: 150 },
-      ];
-
-      this.fistRgiht.animate(this.fistRightDone ? arr[0] : arr[1], {
-        duration: 100,
-        onChange: this.canvas.renderAll.bind(this.canvas),
-        onComplete: this.fistAnimate,
-      });
+      this.fistRight.animate(
+        this.fistRightDone
+          ? this.puncRightMoveCoords[0]
+          : this.puncRightMoveCoords[1],
+        {
+          duration: 100,
+          onChange: this.canvas.renderAll.bind(this.canvas),
+          onComplete: this.fistAnimate,
+        },
+      );
       this.fistRightDone = !this.fistRightDone;
     },
     // 播放动画
@@ -198,10 +225,28 @@ export default {
           scaleY: 160 / img.height,
         });
         this.canvas.renderAll();
-        // this.canvas.setCoords();
       });
-      this.canvas.renderAll();
-      this.canvas.calcOffset();
+    },
+    // 替换拳头图片素材
+    changePunchImage(src) {
+      this.fistLeft.setSrc(src, () => {
+        this.fistLeft.set({
+          ...this.puncLeftMoveCoords[0],
+          selectable: false,
+          originX: 'center',
+          originY: 'center',
+        });
+        this.canvas.renderAll();
+      });
+      this.fistRight.setSrc(src, () => {
+        this.fistRight.set({
+          ...this.puncRightMoveCoords[0],
+          selectable: false,
+          originX: 'center',
+          originY: 'center',
+        });
+        this.canvas.renderAll();
+      });
     },
     // 图片上传
     uploadImg(event) {
@@ -335,16 +380,14 @@ body {
     font-size: 30px;
     margin-top: 20px;
   }
-  .notice {
-    .title {
-      font-size: 16px;
-      font-weight: 700;
-    }
-    text-align: left;
-    font-size: 14px;
+  .punch-list {
     padding: 0 20px;
+    h2 {
+      font-weight: 700;
+      text-align: left;
+      margin-bottom: 10px;
+    }
     margin-bottom: 20px;
-    line-height: 1.2;
   }
   .punch {
     height: 300px;
