@@ -228,14 +228,29 @@ export default {
         toast.show();
         return;
       }
+      const toast = this.$createToast({
+        time: 0,
+        txt: '图片上传中',
+      });
+      toast.show();
 
-      const reads = new FileReader();
-      reads.readAsDataURL(oFile);
-      reads.onload = () => {
-        this.cropperImg = reads.result;
-        const component = this.$refs['myPopup'];
-        component.show();
-      };
+      try {
+        const reads = new FileReader();
+        reads.readAsDataURL(oFile);
+        reads.onload = () => {
+          toast.hide();
+          this.cropperImg = reads.result;
+          const component = this.$refs['myPopup'];
+          component.show();
+        };
+      } catch (err) {
+        const toast = this.$createToast({
+          time: 1000,
+          type: 'warn',
+          txt: '图片上传失败，请重试',
+        });
+        toast.show();
+      }
     },
 
     // gif 下载
