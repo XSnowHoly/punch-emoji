@@ -278,10 +278,10 @@ export default {
       typeObj.target.animate(
         this[[typeObj.done]] ? typeObj.moveCoords[0] : typeObj.moveCoords[1],
         {
-          duration: 80,
+          duration: 50,
           onChange: this.canvas.renderAll.bind(this.canvas),
           onComplete,
-          easing: fabric.util.ease.easeOutCubic,
+          easing: fabric.util.ease.easeOutQuad,
         },
       );
       this[[typeObj.done]] = !this[[typeObj.done]];
