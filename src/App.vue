@@ -12,6 +12,14 @@
         type="radio"
       />
     </div>
+    <div class="punch-list">
+      <h2>拳法：</h2>
+      <cube-checker
+        v-model="checkPunchModeValue"
+        :options="punchMode"
+        type="radio"
+      />
+    </div>
     <Notice />
     <input type="file" accept="image/*" multiple @change="uploadImg" />
     <div class="action-box">
@@ -63,6 +71,17 @@ export default {
           text: '火焰拳',
         },
       ],
+      checkPunchModeValue: 1,
+      punchMode: [
+        {
+          value: 1,
+          text: '左右摆拳',
+        },
+        {
+          value: 2,
+          text: '直拳',
+        },
+      ],
       cropperImg: null,
       templateImg: defaultImg,
       templateMoveCoords: [
@@ -78,6 +97,14 @@ export default {
         { scaleX: 0.2, scaleY: 0.2, angle: 45, left: 170, top: 170 },
         { scaleX: 0.35, scaleY: 0.35, angle: 10, left: 140, top: 150 },
       ],
+      straightPuncLeftMoveCoords: [
+        { scaleX: 0.15, scaleY: 0.15, angle: 0, left: 50, top: 165 },
+        { scaleX: 0.3, scaleY: 0.3, angle: 0, left: 50, top: 165 },
+      ],
+      straightPuncRightMoveCoords: [
+        { scaleX: 0.15, scaleY: 0.15, angle: 0, left: 150, top: 165 },
+        { scaleX: 0.3, scaleY: 0.3, angle: 0, left: 150, top: 165 },
+      ],
       cropperOptions: {
         outputSize: 1,
       },
@@ -86,10 +113,10 @@ export default {
       canvas: null,
       index: 0,
       opinion: true,
-      fistLeft: null,
-      fistRight: null,
-      fistLeftDone: false,
-      fistRightDone: false,
+      fistLeft: null, // 左拳实例
+      fistRight: null, // 右拳实例
+      fistLeftDone: false, // 左拳动画完成
+      fistRightDone: false, // 右拳动画完成
       gifData: undefined,
       cap: null,
       downlaodLock: false,
@@ -110,6 +137,9 @@ export default {
     checkPunchStyleValue(val) {
       this.changePunchImage(val);
     },
+    checkPunchModeValue() {
+      this.play();
+    }
   },
   methods: {
     // 模板图片初始化
@@ -159,6 +189,7 @@ export default {
     },
     // 模板图片动画
     animate() {
+      if (this.checkPunchModeValue !== 1) return;
       const arr = [
         { left: 5, top: 20 },
         { left: 20, top: 5 },
@@ -178,40 +209,96 @@ export default {
         onComplete: this.animate,
       });
     },
-    // 左拳头动画
-    fistAnimate() {
-      this.fistLeft.animate(
-        this.fistLeftDone
-          ? this.puncLeftMoveCoords[0]
-          : this.puncLeftMoveCoords[1],
+
+    straightPunchAvatarAnimate() {
+      if (this.checkPunchModeValue !== 2) return;
+      this.rect.animate(
+        { left: 20, top: this.rect.top === 5 ? 10 : 5 },
+        {
+          duration: 120,
+          onChange: this.canvas.renderAll.bind(this.canvas),
+          onComplete: this.straightPunchAvatarAnimate,
+        },
+      );
+    },
+
+    // 左右摆拳动画
+    fistAnimate(type) {
+      if (this.checkPunchModeValue !== 1) return;
+      const typeMap = {
+        left: {
+          target: this.fistLeft,
+          done: 'fistLeftDone',
+          moveCoords: this.puncLeftMoveCoords,
+        },
+        right: {
+          target: this.fistRight,
+          done: 'fistRightDone',
+          moveCoords: this.puncRightMoveCoords,
+        },
+      };
+      const typeObj = typeMap[type];
+      const onComplete =
+        type === 'left'
+          ? () => this.fistAnimate('right')
+          : () => this.fistAnimate('left');
+
+      typeObj.target.animate(
+        this[[typeObj.done]] ? typeObj.moveCoords[0] : typeObj.moveCoords[1],
         {
           duration: 100,
           onChange: this.canvas.renderAll.bind(this.canvas),
-          onComplete: this.fistRightAnimate,
+          onComplete,
           easing: fabric.util.ease.easeOutCubic,
         },
       );
-      this.fistLeftDone = !this.fistLeftDone;
+      this[[typeObj.done]] = !this[[typeObj.done]];
     },
-    // 右拳头动画
-    fistRightAnimate() {
-      this.fistRight.animate(
-        this.fistRightDone
-          ? this.puncRightMoveCoords[0]
-          : this.puncRightMoveCoords[1],
+    // 直拳动画
+    straightPunchAnimate(type) {
+      if (this.checkPunchModeValue !== 2) return;
+      const typeMap = {
+        left: {
+          target: this.fistLeft,
+          done: 'fistLeftDone',
+          moveCoords: this.straightPuncLeftMoveCoords,
+        },
+        right: {
+          target: this.fistRight,
+          done: 'fistRightDone',
+          moveCoords: this.straightPuncRightMoveCoords,
+        },
+      };
+      const typeObj = typeMap[type];
+      const onComplete =
+        type === 'left'
+          ? () => this.straightPunchAnimate('right')
+          : () => this.straightPunchAnimate('left');
+
+      typeObj.target.animate(
+        this[[typeObj.done]] ? typeObj.moveCoords[0] : typeObj.moveCoords[1],
         {
-          duration: 100,
+          duration: 80,
           onChange: this.canvas.renderAll.bind(this.canvas),
-          onComplete: this.fistAnimate,
+          onComplete,
+          easing: fabric.util.ease.easeOutCubic,
         },
       );
-      this.fistRightDone = !this.fistRightDone;
+      this[[typeObj.done]] = !this[[typeObj.done]];
     },
     // 播放动画
     play() {
       this.disablePlay = true;
+      const modeMap = { 1: 'leftRightPunchMode', 2: 'straightPunchMode' };
+      this[modeMap[this.checkPunchModeValue]]();
+    },
+    leftRightPunchMode() {
       this.animate();
-      this.fistAnimate();
+      this.fistAnimate('left');
+    },
+    straightPunchMode() {
+      this.straightPunchAvatarAnimate();
+      this.straightPunchAnimate('left');
     },
     // 替换图片素材
     changeImage(src) {
@@ -387,10 +474,10 @@ body {
       text-align: left;
       margin-bottom: 10px;
     }
-    margin-bottom: 20px;
+    margin-bottom: 10px;
   }
   .punch {
-    height: 300px;
+    height: 250px;
     display: flex;
     justify-content: center;
     align-items: center;
