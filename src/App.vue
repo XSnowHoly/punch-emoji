@@ -139,7 +139,7 @@ export default {
     },
     checkPunchModeValue() {
       this.play();
-    }
+    },
   },
   methods: {
     // 模板图片初始化
@@ -401,8 +401,8 @@ export default {
       }, 5000);
       let canvas = document.querySelector('canvas');
       const cap = new window.CCapture({
-        framerate: 40,
-        timeLimit: 1.5,
+        framerate: 60,
+        timeLimit: 2,
         name: 'punch',
         format: 'gif',
         workersPath: this.publicPath,
@@ -414,11 +414,18 @@ export default {
       });
       toast.show();
       cap.start();
+      // fabric.util.requestAnimFrame(function render() {
+      //   fabric.util.requestAnimFrame(render);
+      //   cap.capture(canvas);
+      // });
       function _animate() {
-        requestAnimationFrame(_animate);
-        if (cap) {
-          cap.capture(canvas);
-        }
+        setTimeout(() => {
+          if (cap) {
+            cap.capture(canvas);
+          }
+          _animate();
+        }, 50);
+        // requestAnimationFrame(_animate);
       }
       _animate();
 
@@ -426,13 +433,6 @@ export default {
       //   cap.stop();
       //   cap.save();
       // }, 1000);
-
-      // fabric.util.requestAnimFrame(function render() {
-      //   fabric.util.requestAnimFrame(render);
-      //   if(cap) {
-      //     cap.capture(canvas);
-      //   }
-      // });
     },
     getCropData() {
       this.$refs.cropper.getCropData((data) => {
